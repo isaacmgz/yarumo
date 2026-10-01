@@ -1,0 +1,64 @@
+name: yarumo
+
+# Skeleton from docs/02-arquitectura.md.
+# Every service uses host networking (demo decision, see the spec).
+# container_name is fixed so commands like `podman exec ollama ...` work as documented.
+
+services:
+  mosquitto:
+    image: docker.io/library/eclipse-mosquitto:2
+    container_name: mosquitto
+    network_mode: host
+    volumes:
+      # Read-only: the image entrypoint runs `chown -R mosquitto /mosquitto`,
+      # which under rootless Podman would hand the repo files to a subuid.
+      # The passwd file is prepared by scripts/mqtt-passwd.sh instead.
+      - ./config/mosquitto:/mosquitto/config:ro,Z
+      - mosquitto-data:/mosquitto/data
+    restart: unless-stopped
+
+  homeassistant:
+    image: ghcr.io/home-assistant/home-assistant:stable
+    container_name: homeassistant
+    network_mode: host
+    environment:
+      - TZ=America/Bogota
+    volumes:
+      - ./config/homeassistant:/config:Z
+    restart: unless-stopped
+    depends_on: [mosquitto]
+
+  ollama:
+    image: docker.io/ollama/ollama:latest
+    container_name: ollama
+    network_mode: host
+    environment:
+      - OLLAMA_HOST=127.0.0.1:11434
+    volumes:
+      - ollama-data:/root/.ollama
+    restart: unless-stopped
+
+  # H1: enable once services/sim-casa exists.
+  # sim-casa:
+  #   build: ./services/sim-casa
+  #   container_name: sim-casa
+  #   network_mode: host
+  #   env_file: .env
+  #   restart: unless-stopped
+  #   depends_on: [mosquitto]
+
+  # H3: enable once services/savi exists.
+  # savi:
+  #   build: ./services/savi
+  #   container_name: savi
+  #   network_mode: host
+  #   env_file: .env
+  #   volumes:
+  #     - savi-data:/data
+  #   restart: unless-stopped
+  #   depends_on: [homeassistant, mosquitto, ollama]
+
+volumes:
+  mosquitto-data:
+  ollama-data:
+  savi-data:
