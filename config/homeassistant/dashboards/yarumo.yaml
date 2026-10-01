@@ -1,0 +1,195 @@
+# Dashboard "Yarumo" (panel de pared en PC-B). Spec: docs/04-home-assistant.md.
+# Modo YAML, registrado en configuration.yaml (lovelace.dashboards.yarumo-panel).
+title: Yarumo
+views:
+  - title: Casa
+    path: casa
+    icon: mdi:home-lightning-bolt
+    type: sections
+    max_columns: 4
+    sections:
+      # 1 · Casa ahora
+      - type: grid
+        cards:
+          - type: heading
+            heading: Casa ahora
+            icon: mdi:home-account
+          - type: markdown
+            content: >-
+              ## {{ now().strftime('%H:%M') }}
+          - type: tile
+            entity: binary_sensor.casa_ocupada
+            name: Casa ocupada
+          - type: tile
+            entity: binary_sensor.residente_1_en_casa
+            name: Residente 1
+            icon: mdi:cellphone
+          - type: tile
+            entity: binary_sensor.residente_2_en_casa
+            name: Residente 2
+            icon: mdi:cellphone
+          - type: tile
+            entity: sensor.temperatura_sala
+            name: Temperatura sala
+          - type: tile
+            entity: binary_sensor.puerta_principal
+            name: Puerta principal
+
+      # 2 · Consumo ahora
+      - type: grid
+        cards:
+          - type: heading
+            heading: Consumo ahora
+            icon: mdi:flash
+          - type: gauge
+            entity: sensor.casa_potencia_total
+            name: Potencia total (medición simulada)
+            unit: W
+            min: 0
+            max: 1500
+            needle: true
+            severity:
+              green: 0
+              yellow: 300
+              red: 1000
+            grid_options:
+              columns: full
+          - type: history-graph
+            title: Últimas 6 horas
+            hours_to_show: 6
+            entities:
+              - entity: sensor.casa_potencia_total
+                name: Potencia total
+            grid_options:
+              columns: full
+
+      # 3 · Savi
+      - type: grid
+        cards:
+          - type: heading
+            heading: Savi
+            icon: mdi:leaf
+          - type: tile
+            entity: sensor.savi_energia_evitada
+            name: Energía evitada (estimado)
+          - type: tile
+            entity: sensor.savi_ahorro_estimado
+            name: Ahorro (estimado)
+          - type: tile
+            entity: sensor.savi_automatizaciones_activas
+            name: Automatizaciones activas
+          - type: markdown
+            content: >-
+              Ahorro **estimado** con potencias nominales × tiempo × tarifa ·
+              datos simulados · tarifa sin verificar
+            grid_options:
+              columns: full
+          - type: iframe
+            url: http://192.168.20.40:8088/panel # HOST_IP de .env; ajustar si cambia
+            aspect_ratio: 75%
+            grid_options:
+              columns: full
+
+      # 4 · Cuartos
+      - type: grid
+        cards:
+          - type: heading
+            heading: Cuartos
+            icon: mdi:floor-plan
+          - type: entities
+            title: Sala
+            entities:
+              - entity: light.luz_sala
+                name: Luz
+              - entity: switch.tv_sala
+                name: TV
+              - entity: binary_sensor.movimiento_sala
+                name: Movimiento
+          - type: entities
+            title: Cocina
+            entities:
+              - entity: light.luz_cocina
+                name: Luz
+              - entity: binary_sensor.movimiento_cocina
+                name: Movimiento
+          - type: entities
+            title: Habitación principal
+            entities:
+              - entity: light.luz_habitacion_principal
+                name: Luz
+              - entity: switch.ventilador_habitacion_principal
+                name: Ventilador
+              - entity: binary_sensor.movimiento_habitacion_principal
+                name: Movimiento
+          - type: entities
+            title: Habitación 2
+            entities:
+              - entity: light.luz_habitacion_2
+                name: Luz
+              - entity: switch.plancha_ropa
+                name: Plancha
+              - entity: binary_sensor.movimiento_habitacion_2
+                name: Movimiento
+          - type: entities
+            title: Estudio
+            entities:
+              - entity: light.luz_estudio
+                name: Luz
+              - entity: switch.pc_estudio
+                name: PC
+              - entity: binary_sensor.movimiento_estudio
+                name: Movimiento
+
+      # 5 · Modo demo (solo visible con input_boolean.modo_demo encendido)
+      - type: grid
+        visibility:
+          - condition: state
+            entity: input_boolean.modo_demo
+            state: "on"
+        cards:
+          - type: heading
+            heading: Modo demo
+            icon: mdi:presentation-play
+          - type: entities
+            title: Presencia
+            entities:
+              - entity: input_select.presencia_residente_1
+                name: Residente 1 (Android)
+              - entity: input_select.presencia_residente_2
+                name: Residente 2 (iPhone)
+              - entity: input_number.retardo_casa_vacia_s
+                name: Retardo casa vacía
+            grid_options:
+              columns: full
+          - type: button
+            name: Mañana laboral
+            icon: mdi:weather-sunset-up
+            tap_action:
+              action: perform-action
+              perform_action: script.yarumo_escena_manana_laboral
+          - type: button
+            name: Se nos olvidó apagar
+            icon: mdi:television-classic
+            tap_action:
+              action: perform-action
+              perform_action: script.yarumo_escena_olvido_salida
+          - type: button
+            name: Plancha olvidada
+            icon: mdi:iron
+            tap_action:
+              action: perform-action
+              perform_action: script.yarumo_escena_plancha_olvidada
+          - type: button
+            name: Noche
+            icon: mdi:weather-night
+            tap_action:
+              action: perform-action
+              perform_action: script.yarumo_escena_noche
+          - type: button
+            name: Reiniciar demo
+            icon: mdi:restart
+            tap_action:
+              action: perform-action
+              perform_action: script.yarumo_reiniciar_demo
+              confirmation:
+                text: ¿Reiniciar la demo? Se apaga todo en la casa simulada.

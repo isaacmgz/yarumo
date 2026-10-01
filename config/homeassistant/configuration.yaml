@@ -13,6 +13,18 @@ script: !include scripts.yaml
 
 recorder:
   purge_keep_days: 30
+  include:
+    entities:
+      - sensor.casa_potencia_total   # el dashboard grafica sus últimas 6 h
   exclude:
     entity_globs:
       - sensor.*_potencia      # la potencia cambia mucho; Savi la lee en vivo
+
+lovelace:
+  dashboards:
+    yarumo-panel:
+      mode: yaml
+      filename: dashboards/yarumo.yaml
+      title: Yarumo
+      icon: mdi:home-lightning-bolt
+      show_in_sidebar: true

@@ -48,7 +48,17 @@ Detalle en [`docs/04-home-assistant.md`](docs/04-home-assistant.md).
 4. Crear un **token de larga duración** (perfil → seguridad) y ponerlo en `.env` como `HA_TOKEN`.
 5. Instalar la app **Home Assistant Companion** en el Android y en el iPhone, iniciar sesión con la URL local, dar permiso de ubicación "Siempre" (necesario para leer el nombre de la Wi-Fi) y permitir notificaciones.
 6. Crear las personas `residente_1` (Android) y `residente_2` (iPhone) y asignarles el `device_tracker` de cada app.
-7. Escribir en `config/homeassistant/packages/yarumo_presencia.yaml` los `entity_id` reales de los sensores de Wi-Fi de cada celular (hito H2).
+7. Escribir en `config/homeassistant/packages/yarumo_presencia.yaml` los `entity_id` reales de los sensores de Wi-Fi de cada celular (hito H2) y crear `config/homeassistant/secrets.yaml` a partir de `secrets.yaml.example` con el nombre exacto de la Wi-Fi de la casa (`wifi_casa_ssid`). Ese archivo no se versiona.
+8. Panel de **Energía**: `./scripts/ha-energia.sh` (consumo total, los 9 dispositivos y la tarifa de `TARIFA_COP_KWH`; con `0` queda sin precio). Se puede repetir; vuelva a correrlo si cambia la tarifa.
+
+Dashboard: "Yarumo" en la barra lateral (`/yarumo-panel`), definido en `config/homeassistant/dashboards/yarumo.yaml`. La sección "Modo demo" solo aparece con `input_boolean.modo_demo` encendido. El iframe de Savi apunta a `http://192.168.20.40:8088/panel`; si cambia `HOST_IP`, actualizar esa línea.
+
+Después de editar YAML de Home Assistant:
+
+```bash
+podman exec homeassistant python -m homeassistant --script check_config -c /config
+podman restart homeassistant
+```
 
 Después de los pasos 2 y 4, `./scripts/check-stack.sh` también verifica el token y que la integración MQTT esté cargada.
 

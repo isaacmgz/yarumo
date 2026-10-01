@@ -1,0 +1,71 @@
+# Yarumo · Modo demo (docs/04-home-assistant.md, "Dashboard", punto 5)
+#
+# Controles para presentar la demo: el interruptor del modo demo y los
+# scripts de escena, que llaman a la API de escenarios de sim-casa (puerto 8090).
+
+input_boolean:
+  modo_demo:
+    name: Modo demo
+    icon: mdi:presentation-play
+
+rest_command:
+  sim_escenario:
+    url: "http://127.0.0.1:8090/escenarios/{{ nombre }}"
+    method: POST
+    timeout: 5
+
+script:
+  yarumo_escena_manana_laboral:
+    alias: "Escena · Mañana laboral"
+    icon: mdi:weather-sunset-up
+    sequence:
+      - action: rest_command.sim_escenario
+        data:
+          nombre: manana_laboral
+
+  yarumo_escena_olvido_salida:
+    alias: "Escena · Se nos olvidó apagar"
+    icon: mdi:television-classic
+    sequence:
+      - action: rest_command.sim_escenario
+        data:
+          nombre: olvido_salida
+
+  yarumo_escena_plancha_olvidada:
+    alias: "Escena · Plancha olvidada"
+    icon: mdi:iron
+    sequence:
+      - action: rest_command.sim_escenario
+        data:
+          nombre: plancha_olvidada
+
+  yarumo_escena_noche:
+    alias: "Escena · Noche"
+    icon: mdi:weather-night
+    sequence:
+      - action: rest_command.sim_escenario
+        data:
+          nombre: noche
+
+  yarumo_reiniciar_demo:
+    alias: "Reiniciar demo"
+    icon: mdi:restart
+    description: >-
+      Apaga todo en el simulador (sin borrar contadores de energía), deja la
+      presencia en automático y el retardo de casa vacía en 30 s.
+    sequence:
+      - action: rest_command.sim_escenario
+        data:
+          nombre: reset
+      - action: input_select.select_option
+        target:
+          entity_id:
+            - input_select.presencia_residente_1
+            - input_select.presencia_residente_2
+        data:
+          option: auto
+      - action: input_number.set_value
+        target:
+          entity_id: input_number.retardo_casa_vacia_s
+        data:
+          value: 30

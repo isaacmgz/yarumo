@@ -1,0 +1,54 @@
+# Yarumo · Energía (docs/04-home-assistant.md, sección "Energía")
+#
+# Suma de los 9 dispositivos del contrato MQTT (docs/03-contrato-mqtt.md).
+# Las potencias son supuestos nominales simulados, no mediciones.
+# Si falta algún sensor, el total queda "no disponible" en vez de sumar de menos
+# (para energía, una suma incompleta parecería un reinicio del contador).
+
+template:
+  - sensor:
+      - name: Potencia total de la casa
+        unique_id: yarumo_casa_potencia_total
+        default_entity_id: sensor.casa_potencia_total
+        icon: mdi:flash
+        unit_of_measurement: W
+        device_class: power
+        state_class: measurement
+        variables:
+          fuentes:
+            - sensor.luz_sala_potencia
+            - sensor.luz_cocina_potencia
+            - sensor.luz_habitacion_principal_potencia
+            - sensor.luz_habitacion_2_potencia
+            - sensor.luz_estudio_potencia
+            - sensor.tv_sala_potencia
+            - sensor.pc_estudio_potencia
+            - sensor.ventilador_habitacion_principal_potencia
+            - sensor.plancha_ropa_potencia
+        availability: >-
+          {{ fuentes | map('states') | select('is_number') | list | count == fuentes | count }}
+        state: >-
+          {{ fuentes | map('states') | map('float', 0) | sum | round(1) }}
+
+      - name: Energía total de la casa
+        unique_id: yarumo_casa_energia_total
+        default_entity_id: sensor.casa_energia_total
+        icon: mdi:lightning-bolt
+        unit_of_measurement: kWh
+        device_class: energy
+        state_class: total_increasing
+        variables:
+          fuentes:
+            - sensor.luz_sala_energia
+            - sensor.luz_cocina_energia
+            - sensor.luz_habitacion_principal_energia
+            - sensor.luz_habitacion_2_energia
+            - sensor.luz_estudio_energia
+            - sensor.tv_sala_energia
+            - sensor.pc_estudio_energia
+            - sensor.ventilador_habitacion_principal_energia
+            - sensor.plancha_ropa_energia
+        availability: >-
+          {{ fuentes | map('states') | select('is_number') | list | count == fuentes | count }}
+        state: >-
+          {{ fuentes | map('states') | map('float', 0) | sum | round(4) }}

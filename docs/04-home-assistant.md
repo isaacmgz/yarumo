@@ -20,6 +20,9 @@ script: !include scripts.yaml
 
 recorder:
   purge_keep_days: 30
+  include:
+    entities:
+      - sensor.casa_potencia_total   # el dashboard grafica sus últimas 6 h
   exclude:
     entity_globs:
       - sensor.*_potencia      # la potencia cambia mucho; Savi la lee en vivo
@@ -41,7 +44,7 @@ Organizar todo lo propio en `packages/`:
 4. Crear un **token de larga duración** (perfil → seguridad) y ponerlo en `.env` como `HA_TOKEN`.
 5. Instalar la app **Home Assistant Companion** en el Android y en el iPhone, iniciar sesión con la URL local, dar permiso de ubicación "Siempre" (necesario para leer el nombre de la Wi-Fi) y permitir notificaciones.
 6. Crear las personas `residente_1` (Android) y `residente_2` (iPhone) y asignarles el `device_tracker` de cada app.
-7. Escribir en `packages/yarumo_presencia.yaml` los `entity_id` reales de los sensores de Wi-Fi de cada celular (ver abajo).
+7. Escribir en `packages/yarumo_presencia.yaml` los `entity_id` reales de los sensores de Wi-Fi de cada celular (ver abajo) y poner el nombre de la Wi-Fi de la casa en `secrets.yaml` (`wifi_casa_ssid`, plantilla en `secrets.yaml.example`; no se versiona).
 
 ## Presencia
 
@@ -58,7 +61,8 @@ Entidades a crear:
 |---|---|---|
 | `input_select.presencia_residente_1` | helper | `auto` / `en_casa` / `fuera` |
 | `input_select.presencia_residente_2` | helper | igual |
-| `binary_sensor.residente_1_en_casa` | template | si el select ≠ `auto`, manda el select; si no, SSID == `HOME_SSID` **o** tracker == `home` |
+| `input_text.wifi_casa_ssid` | helper (`mode: password`) | SSID de la casa, inicializado con `!secret wifi_casa_ssid` (los templates no pueden leer `!secret`) |
+| `binary_sensor.residente_1_en_casa` | template | si el select ≠ `auto`, manda el select; si no, SSID == `input_text.wifi_casa_ssid`; el tracker == `home` solo se usa si el sensor de Wi-Fi está `unknown`/`unavailable` (con un "o" simple, el GPS mantendría al residente en casa al apagar la Wi-Fi) |
 | `binary_sensor.residente_2_en_casa` | template | igual |
 | `binary_sensor.casa_ocupada` | template | algún residente en casa; `delay_off` configurable (`input_number.retardo_casa_vacia_s`, por defecto 30 s en demo, 300 s en uso normal) |
 
@@ -77,7 +81,8 @@ Panel de **Energía** de HA:
 
 - Consumo de red: `sensor.casa_energia_total` (rotulado en el dashboard como "medición simulada").
 - Dispositivos individuales: los 9 `sensor.*_energia`.
-- Precio: tarifa fija igual a `TARIFA_COP_KWH`.
+- Precio: tarifa fija igual a `TARIFA_COP_KWH`. Si vale `0` (sin definir), el panel queda sin precio en vez de mostrar costo cero.
+- Se configura por WebSocket (`energy/save_prefs`) con `./scripts/ha-energia.sh`; se puede repetir sin problema.
 
 ## Notificaciones
 

@@ -1,0 +1,115 @@
+# Yarumo · Presencia (docs/04-home-assistant.md, sección "Presencia")
+#
+# Señal principal: nombre de la Wi-Fi a la que está conectado cada celular.
+# Respaldo: device_tracker en zona `home`, solo cuando el sensor de Wi-Fi no
+# reporta (unknown/unavailable). Encima, un override manual para la demo.
+#
+# El nombre de la Wi-Fi de la casa es dato personal: vive en secrets.yaml
+# (`wifi_casa_ssid`, ver secrets.yaml.example) y entra a HA por
+# input_text.wifi_casa_ssid, porque `!secret` no se puede usar dentro de Jinja.
+
+input_select:
+  presencia_residente_1:
+    name: Presencia residente 1
+    icon: mdi:account-switch
+    options:
+      - auto
+      - en_casa
+      - fuera
+  presencia_residente_2:
+    name: Presencia residente 2
+    icon: mdi:account-switch
+    options:
+      - auto
+      - en_casa
+      - fuera
+
+input_number:
+  retardo_casa_vacia_s:
+    name: Retardo casa vacía
+    icon: mdi:timer-sand
+    min: 0
+    max: 600
+    step: 5
+    unit_of_measurement: s
+    mode: box
+    initial: 30 # demo; en uso normal, 300
+
+input_text:
+  wifi_casa_ssid:
+    name: Wi-Fi de la casa
+    icon: mdi:wifi-lock
+    initial: !secret wifi_casa_ssid
+    mode: password
+    max: 64
+
+template:
+  - binary_sensor:
+      - name: Residente 1 en casa
+        unique_id: yarumo_residente_1_en_casa
+        default_entity_id: binary_sensor.residente_1_en_casa
+        device_class: presence
+        state: >-
+          {% set sel = states('input_select.presencia_residente_1') %}
+          {% set ssid = states('sensor.android_yarumo_wi_fi_connection') %}
+          {% if sel == 'en_casa' %}true
+          {% elif sel == 'fuera' %}false
+          {% elif ssid in ['unknown', 'unavailable'] %}{{ is_state('device_tracker.android_yarumo', 'home') }}
+          {% else %}{{ ssid == states('input_text.wifi_casa_ssid') }}
+          {% endif %}
+
+      - name: Residente 2 en casa
+        unique_id: yarumo_residente_2_en_casa
+        default_entity_id: binary_sensor.residente_2_en_casa
+        device_class: presence
+        state: >-
+          {% set sel = states('input_select.presencia_residente_2') %}
+          {% set ssid = states('sensor.iphone_yarumo_ssid') %}
+          {% if sel == 'en_casa' %}true
+          {% elif sel == 'fuera' %}false
+          {% elif ssid in ['unknown', 'unavailable'] %}{{ is_state('device_tracker.iphone_yarumo', 'home') }}
+          {% else %}{{ ssid == states('input_text.wifi_casa_ssid') }}
+          {% endif %}
+
+      - name: Casa ocupada
+        unique_id: yarumo_casa_ocupada
+        default_entity_id: binary_sensor.casa_ocupada
+        device_class: occupancy
+        state: >-
+          {{ is_state('binary_sensor.residente_1_en_casa', 'on')
+             or is_state('binary_sensor.residente_2_en_casa', 'on') }}
+        delay_off: "{{ states('input_number.retardo_casa_vacia_s') | int(30) }}"
+
+automation:
+  - id: yarumo_publicar_ocupacion
+    alias: "Yarumo · Publicar ocupación"
+    description: >-
+      Fija. Publica la ocupación de la casa (retenida) en
+      yarumo/presencia/ocupada para que el simulador sepa si hay alguien.
+    mode: queued
+    triggers:
+      - trigger: state
+        entity_id: binary_sensor.casa_ocupada
+        to:
+          - "on"
+          - "off"
+      - trigger: homeassistant
+        event: start
+    conditions:
+      - condition: template
+        value_template: "{{ states('binary_sensor.casa_ocupada') in ['on', 'off'] }}"
+    actions:
+      - action: mqtt.publish
+        data:
+          topic: yarumo/presencia/ocupada
+          payload: "{{ 'true' if is_state('binary_sensor.casa_ocupada', 'on') else 'false' }}"
+          qos: 1
+          retain: true
+
+# Grupo de notificación: Savi le escribe a los dos celulares con notify.residentes.
+notify:
+  - platform: group
+    name: residentes
+    services:
+      - action: mobile_app_android_yarumo
+      - action: mobile_app_iphone_yarumo
