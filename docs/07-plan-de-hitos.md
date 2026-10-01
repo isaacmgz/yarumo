@@ -14,7 +14,7 @@ Aceptación:
 - Integración MQTT conectada; `mosquitto_sub` con credenciales funciona y sin credenciales falla.
 - `check-stack.sh` reporta el estado de cada servicio.
 
-## H1 · Casa simulada (1–2 sesiones)
+## H1 · Casa simulada (1–2 sesiones) — ✅ Hecho (2026-09-30)
 
 Construir: servicio `sim-casa` según `03-contrato-mqtt.md`, con API de escenarios y tests de contrato.
 

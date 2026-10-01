@@ -38,14 +38,16 @@ services:
       - ollama-data:/root/.ollama
     restart: unless-stopped
 
-  # H1: enable once services/sim-casa exists.
-  # sim-casa:
-  #   build: ./services/sim-casa
-  #   container_name: sim-casa
-  #   network_mode: host
-  #   env_file: .env
-  #   restart: unless-stopped
-  #   depends_on: [mosquitto]
+  sim-casa:
+    build: ./services/sim-casa
+    container_name: sim-casa
+    network_mode: host
+    env_file: .env
+    volumes:
+      # Energy accumulators survive restarts (docs/03-contrato-mqtt.md).
+      - sim-casa-data:/data:Z
+    restart: unless-stopped
+    depends_on: [mosquitto]
 
   # H3: enable once services/savi exists.
   # savi:
@@ -61,4 +63,5 @@ services:
 volumes:
   mosquitto-data:
   ollama-data:
+  sim-casa-data:
   savi-data:

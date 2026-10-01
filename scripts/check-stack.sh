@@ -43,7 +43,7 @@ container_running() {
 }
 
 echo "== Containers"
-for svc in mosquitto homeassistant ollama; do
+for svc in mosquitto homeassistant ollama sim-casa; do
   if container_running "$svc"; then
     ok "$svc is running"
   else
@@ -111,6 +111,17 @@ if [[ "$tags_json" == *'"models"'* ]]; then
   fi
 else
   fail "no response at $OLLAMA_URL/api/tags"
+fi
+
+echo "== sim-casa"
+SIM_PORT="${SIM_PORT:-8090}"
+sim_health="$(curl -s --max-time 5 "http://127.0.0.1:${SIM_PORT}/health" 2>/dev/null || true)"
+if [[ "$sim_health" == *'"mqtt":"connected"'* ]]; then
+  ok "health at :$SIM_PORT, MQTT connected"
+elif [[ "$sim_health" == *'"ok":true'* ]]; then
+  fail "health at :$SIM_PORT responds but MQTT is disconnected (check MQTT_USER/MQTT_PASSWORD)"
+else
+  fail "no response at http://127.0.0.1:${SIM_PORT}/health"
 fi
 
 echo

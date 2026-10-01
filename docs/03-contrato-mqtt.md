@@ -102,6 +102,8 @@ Comportamiento simulado:
 ```
 
 > Nota para la implementación: confirmar contra la documentación vigente de la integración MQTT de Home Assistant que `object_id` sigue fijando el `entity_id`. Si cambió, ajustar el campo equivalente; el `entity_id` final es lo que no puede cambiar.
+>
+> Verificado en H1 (2026-09-30): Home Assistant reemplazó `object_id` por `default_entity_id` (`"<component>.<object_id>"`) y dejó de usarlo en 2026.4. `sim-casa` envía ambos campos; los 34 `entity_id` del contrato se comprobaron en Home Assistant.
 
 ## API HTTP de escenarios (`sim-casa`, puerto 8090)
 
