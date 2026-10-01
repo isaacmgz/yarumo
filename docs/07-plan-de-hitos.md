@@ -24,7 +24,7 @@ Aceptación:
 - Reiniciar `sim-casa` no reinicia los acumulados de energía.
 - Matar el proceso deja las entidades como "no disponible" (LWT).
 
-## H2 · Presencia, energía y dashboard (1–2 sesiones)
+## H2 · Presencia, energía y dashboard (1–2 sesiones) — 🟡 Construido (2026-09-30); falta la prueba real con los celulares (salir/entrar de la Wi-Fi) y confirmar notificaciones
 
 Construir: paquetes `yarumo_presencia`, `yarumo_energia`, `yarumo_demo`; dashboard "Yarumo"; grupo `notify.residentes`; panel de Energía.
 
