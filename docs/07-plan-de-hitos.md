@@ -30,7 +30,7 @@ Construir: paquetes `yarumo_presencia`, `yarumo_energia`, `yarumo_demo`; dashboa
 
 Aceptación: los criterios de `04-home-assistant.md`. Prueba real con los dos celulares: salir y entrar de la Wi-Fi cambia la ocupación y el simulador responde.
 
-## H3 · Savi: ingesta, siembra y detectores (2 sesiones)
+## H3 · Savi: ingesta, siembra y detectores (2 sesiones) — ✅ Hecho (2026-09-30)
 
 Construir: `store`, `ingest`, `seed`, detectores D1–D3 y R1, `suggestions`, API de sugerencias y un panel mínimo (lista sin estilo).
 

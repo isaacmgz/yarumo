@@ -49,16 +49,16 @@ services:
     restart: unless-stopped
     depends_on: [mosquitto]
 
-  # H3: enable once services/savi exists.
-  # savi:
-  #   build: ./services/savi
-  #   container_name: savi
-  #   network_mode: host
-  #   env_file: .env
-  #   volumes:
-  #     - savi-data:/data
-  #   restart: unless-stopped
-  #   depends_on: [homeassistant, mosquitto, ollama]
+  savi:
+    build: ./services/savi
+    container_name: savi
+    network_mode: host
+    env_file: .env
+    volumes:
+      # SQLite at /data/savi.db (events, suggestions, savings, chat).
+      - savi-data:/data:Z
+    restart: unless-stopped
+    depends_on: [homeassistant, mosquitto, ollama]
 
 volumes:
   mosquitto-data:

@@ -43,7 +43,7 @@ container_running() {
 }
 
 echo "== Containers"
-for svc in mosquitto homeassistant ollama sim-casa; do
+for svc in mosquitto homeassistant ollama sim-casa savi; do
   if container_running "$svc"; then
     ok "$svc is running"
   else
@@ -122,6 +122,23 @@ elif [[ "$sim_health" == *'"ok":true'* ]]; then
   fail "health at :$SIM_PORT responds but MQTT is disconnected (check MQTT_USER/MQTT_PASSWORD)"
 else
   fail "no response at http://127.0.0.1:${SIM_PORT}/health"
+fi
+
+echo "== savi"
+SAVI_PORT="${SAVI_PORT:-8088}"
+savi_health="$(curl -s --max-time 5 "http://127.0.0.1:${SAVI_PORT}/health" 2>/dev/null || true)"
+if [[ "$savi_health" == *'"ha_ws":"connected"'* ]]; then
+  ok "health at :$SAVI_PORT, Home Assistant WebSocket connected"
+elif [[ "$savi_health" == *'"ok":true'* ]]; then
+  fail "health at :$SAVI_PORT responds but the HA WebSocket is down (check HA_TOKEN)"
+else
+  fail "no response at http://127.0.0.1:${SAVI_PORT}/health"
+fi
+panel_code="$(http_code "http://${HOST_IP}:${SAVI_PORT}/panel")"
+if [[ "$panel_code" == "200" ]]; then
+  ok "panel at http://${HOST_IP}:${SAVI_PORT}/panel (LAN)"
+else
+  fail "panel not reachable at http://${HOST_IP}:${SAVI_PORT}/panel (HTTP $panel_code); check firewall 8088/tcp"
 fi
 
 echo
