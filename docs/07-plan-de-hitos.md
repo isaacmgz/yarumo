@@ -4,7 +4,7 @@ Pensado para sesiones de trabajo con Claude Code de 2–3 horas, a ritmo de 10�
 
 Regla: no se empieza un hito sin que el anterior cumpla sus criterios de aceptación contra el stack corriendo.
 
-## H0 · Base del stack (1 sesión)
+## H0 · Base del stack (1 sesión) — ✅ Hecho (2026-09-30)
 
 Construir: `compose.yaml`, `.env.example`, `config/mosquitto` con usuario, `configuration.yaml` base, `scripts/check-stack.sh`, README con los pasos manuales de `04-home-assistant.md`.
 
