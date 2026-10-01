@@ -208,6 +208,7 @@ class Store:
     def set_suggestion_status(
         self, suggestion_id: int, status: str, now: float, via: str | None = None
     ) -> None:
+        """Status change that is a human decision: stamps decided_at and decided_via."""
         with self._lock, self._conn:
             self._conn.execute(
                 "UPDATE suggestions SET status = ?, decided_at = ?, decided_via = ?,"
@@ -230,6 +231,71 @@ class Store:
     def delete_suggestions(self) -> int:
         with self._lock, self._conn:
             return self._conn.execute("DELETE FROM suggestions").rowcount
+
+    def set_status(self, suggestion_id: int, status: str, now: float) -> None:
+        """Status change that is not a human decision (e.g. `notificada`)."""
+        with self._lock, self._conn:
+            self._conn.execute(
+                "UPDATE suggestions SET status = ?, updated_at = ? WHERE id = ?",
+                (status, now, suggestion_id),
+            )
+
+    def set_automation_id(self, suggestion_id: int, entity_id: str | None) -> None:
+        with self._lock, self._conn:
+            self._conn.execute(
+                "UPDATE suggestions SET automation_id = ? WHERE id = ?", (entity_id, suggestion_id)
+            )
+
+    def suggestion_by_automation(self, entity_id: str) -> dict | None:
+        with self._lock:
+            row = self._conn.execute(
+                "SELECT * FROM suggestions WHERE automation_id = ? ORDER BY id DESC LIMIT 1",
+                (entity_id,),
+            ).fetchone()
+        return _suggestion(row) if row else None
+
+    # ---- savings ------------------------------------------------------
+
+    def open_saving(
+        self, suggestion_id: int, started_at: float, devices: list[dict], power_w: float
+    ) -> int:
+        with self._lock, self._conn:
+            cur = self._conn.execute(
+                "INSERT INTO savings (suggestion_id, started_at, devices_json, power_w, status)"
+                " VALUES (?, ?, ?, ?, 'en_curso')",
+                (suggestion_id, started_at, json.dumps(devices, ensure_ascii=False), power_w),
+            )
+            return int(cur.lastrowid)
+
+    def close_saving(
+        self, saving_id: int, ended_at: float, hours: float, kwh: float, cop: float | None
+    ) -> None:
+        with self._lock, self._conn:
+            self._conn.execute(
+                "UPDATE savings SET ended_at = ?, hours = ?, kwh = ?, cop = ?, status = 'cerrado'"
+                " WHERE id = ?",
+                (ended_at, hours, kwh, cop, saving_id),
+            )
+
+    def savings(self, status: str | None = None) -> list[dict]:
+        sql, args = "SELECT * FROM savings", ()
+        if status is not None:
+            sql, args = sql + " WHERE status = ?", (status,)
+        with self._lock:
+            rows = self._conn.execute(sql + " ORDER BY id", args).fetchall()
+        out = []
+        for r in rows:
+            d = dict(r)
+            d["devices"] = json.loads(d.pop("devices_json"))
+            out.append(d)
+        return out
+
+    def get_saving(self, saving_id: int) -> dict | None:
+        return next((s for s in self.savings() if s["id"] == saving_id), None)
+
+    def delete_savings(self) -> int:
+        with self._lock, self._conn:
+            return self._conn.execute("DELETE FROM savings").rowcount
 
 
 def _suggestion(row: sqlite3.Row) -> dict:

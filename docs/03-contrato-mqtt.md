@@ -105,6 +105,23 @@ Comportamiento simulado:
 >
 > Verificado en H1 (2026-09-30): Home Assistant reemplazó `object_id` por `default_entity_id` (`"<component>.<object_id>"`) y dejó de usarlo en 2026.4. `sim-casa` envía ambos campos; los 34 `entity_id` del contrato se comprobaron en Home Assistant.
 
+## Sensores de Savi (publica `savi`, no el simulador)
+
+Savi publica sus cifras como sensores MQTT de HA, en un dispositivo propio "Savi" (`device.identifiers = ["yarumo_savi"]`, `manufacturer = "Yarumo"`, `model = "savi"`). Las cifras son **estimadas** (ver `05-savi-ia.md` §5).
+
+- Prefijo: `yarumo/savi/<object_id>/estado` (retenido, QoS 1).
+- Discovery: `homeassistant/sensor/yarumo/<object_id>/config` (retenido), con `unique_id = "yarumo_<object_id>"` y `default_entity_id = "sensor.<object_id>"`.
+- Disponibilidad (LWT): `yarumo/savi/disponible` → `online` / `offline` (retenido).
+- Si un valor no se puede calcular (por ejemplo, COP sin tarifa), se publica `None` y HA lo muestra como desconocido; nunca se publica un cero inventado.
+
+| object_id | Unidad | device_class | state_class | Valor |
+|---|---|---|---|---|
+| `savi_energia_evitada` | kWh | energy | total_increasing | kWh evitados: registros cerrados + en curso |
+| `savi_ahorro_estimado` | COP | monetary | total | `energia_evitada × TARIFA_COP_KWH` (`None` si la tarifa es 0) |
+| `savi_ahorro_mensual_proyectado` | COP | monetary | total | Σ COP/mes estimado de las sugerencias activas |
+| `savi_automatizaciones_activas` | — | — | measurement | Sugerencias en estado `activa` |
+| `savi_sugerencias_pendientes` | — | — | measurement | Sugerencias `nueva` o `notificada` |
+
 ## API HTTP de escenarios (`sim-casa`, puerto 8090)
 
 Para preparar y controlar la demo sin tocar Home Assistant.

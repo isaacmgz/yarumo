@@ -136,6 +136,6 @@ def test_admin_requires_demo_mode_and_health_and_stubs(store):
     _, client = _client(store, demo=False)
     assert client.post("/admin/seed").status_code == 403
     assert client.get("/health").json() == {"ok": True, "ha_ws": "connected"}
-    assert client.post("/api/sugerencias/1/aprobar").status_code == 501
+    assert client.post("/api/sugerencias/999/aprobar").status_code == 404
     assert client.post("/api/sugerencias/999/rechazar").status_code == 404
     assert "Savi" in client.get("/panel").text

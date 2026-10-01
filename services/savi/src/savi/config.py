@@ -32,6 +32,12 @@ class Settings:
     demo_mode: bool
     db_path: str
     detectors_interval_s: float
+    mqtt_host: str = "127.0.0.1"
+    mqtt_port: int = 1883
+    mqtt_user: str | None = None
+    mqtt_password: str | None = None
+    automations_path: str | None = None  # plan B: HA's automations.yaml on a shared volume
+    tick_s: float = 60.0
 
     @classmethod
     def from_env(cls, env: dict[str, str] | None = None) -> Settings:
@@ -48,4 +54,10 @@ class Settings:
             demo_mode=_bool(e.get("DEMO_MODE"), True),
             db_path=e.get("SAVI_DB_PATH", "/data/savi.db"),
             detectors_interval_s=_float(e.get("SAVI_DETECTORS_INTERVAL_S"), 3600.0),
+            mqtt_host=e.get("MQTT_HOST", "127.0.0.1"),
+            mqtt_port=int(e.get("MQTT_PORT", "1883")),
+            mqtt_user=e.get("MQTT_USER") or None,
+            mqtt_password=e.get("MQTT_PASSWORD") or None,
+            automations_path=e.get("SAVI_AUTOMATIONS_PATH") or None,
+            tick_s=_float(e.get("SAVI_TICK_S"), 60.0),
         )

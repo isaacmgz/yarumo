@@ -139,6 +139,8 @@ Creación en HA:
 
 Desactivar: `automation.turn_off` sobre esa entidad y estado `desactivada`.
 
+> Verificado en H4 (2026-09-30, HA 2026.9.4): el endpoint de configuración funciona (test `savi_test` con `SAVI_IT=1`). El plan B está implementado pero solo se activa si `SAVI_AUTOMATIONS_PATH` apunta a un `automations.yaml` montado en el contenedor de Savi; hoy no se monta, porque el `:Z` del volumen de HA lo volvería a etiquetar como privado (SELinux).
+
 ## 5. Ahorro (energía evitada)
 
 Supuesto contrafactual, visible en el panel: **"si Savi no hubiera apagado, el dispositivo habría seguido encendido hasta que alguien volviera, con un máximo de 8 h"**. Ese supuesto se sostiene en el historial (es justo lo que mostró el detector).

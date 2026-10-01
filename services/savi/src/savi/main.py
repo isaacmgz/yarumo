@@ -1,4 +1,4 @@
-"""Entry point: wires settings, store, HA ingestion, the hourly detector loop and the API."""
+"""Entry point: wires settings, store, HA ingestion and actions, MQTT sensors, loops and the API."""
 
 from __future__ import annotations
 
@@ -15,7 +15,9 @@ from fastapi import FastAPI
 
 from .api import Savi, create_app
 from .config import Settings
+from .ha_client import HaClient
 from .ingest import Ingest
+from .mqtt_out import MqttOut
 from .store import Store
 from .suggestions import Tariff
 
@@ -24,14 +26,36 @@ log = logging.getLogger("savi")
 
 def build_app(settings: Settings) -> FastAPI:
     store = Store(settings.db_path)
+    ingest = Ingest(store, settings.ha_url, settings.ha_token, time.time)
+    ha = (
+        HaClient(settings.ha_url, settings.ha_token, settings.automations_path)
+        if settings.ha_token
+        else None
+    )
+    mqtt_box: dict[str, MqttOut] = {}
+
+    def publish_sensors() -> None:
+        if "out" in mqtt_box:
+            mqtt_box["out"].publish_states()
+
     savi = Savi(
         store,
         ZoneInfo(settings.tz),
         Tariff(settings.tariff_cop_kwh, settings.tariff_verified),
         time.time,
         settings.demo_mode,
+        ha=ha,
+        cache=ingest.cache,
+        on_change=publish_sensors,
     )
-    ingest = Ingest(store, settings.ha_url, settings.ha_token, time.time)
+    ingest.listener = savi.handle_ha_event
+    mqtt_box["out"] = MqttOut(
+        settings.mqtt_host,
+        settings.mqtt_port,
+        settings.mqtt_user,
+        settings.mqtt_password,
+        savi.sensor_values,
+    )
 
     async def health_probe() -> dict:
         try:
@@ -42,12 +66,13 @@ def build_app(settings: Settings) -> FastAPI:
             ollama = "sin respuesta"
         return {
             "ha_ws": "connected" if ingest.connected else "disconnected",
-            "mqtt": "pendiente (H4)",
+            "mqtt": "connected" if mqtt_box["out"].is_connected() else "disconnected",
             "ollama": ollama,
             "eventos": store.count_events(),
             "eventos_ingeridos": ingest.stored,
             "ultimo_evento": savi._iso(ingest.last_event_at),
             "detectores": savi.last_run,
+            "ahorros_en_curso": len(store.savings("en_curso")),
             "tarifa": {
                 "cop_kwh": settings.tariff_cop_kwh,
                 "verificada": settings.tariff_verified,
@@ -58,22 +83,36 @@ def build_app(settings: Settings) -> FastAPI:
         while True:
             try:
                 await asyncio.to_thread(savi.run_detectors)
+                await savi.notify_new()
+                publish_sensors()
             except Exception:
                 log.exception("detector run failed")
             await asyncio.sleep(settings.detectors_interval_s)
 
+    async def tick_loop() -> None:
+        # Closes records at the 8 h cap / 06:00 and refreshes the live counters every minute.
+        while True:
+            try:
+                savi.tick()
+                publish_sensors()
+            except Exception:
+                log.exception("tick failed")
+            await asyncio.sleep(settings.tick_s)
+
     @contextlib.asynccontextmanager
     async def lifespan(_: FastAPI) -> AsyncIterator[None]:
-        tasks = [asyncio.create_task(detector_loop())]
+        mqtt_box["out"].start()
+        tasks = [asyncio.create_task(detector_loop()), asyncio.create_task(tick_loop())]
         if settings.ha_token:
             tasks.append(asyncio.create_task(ingest.run_forever()))
         else:
-            log.warning("HA_TOKEN not set; ingestion disabled")
+            log.warning("HA_TOKEN not set; ingestion and actions disabled")
         try:
             yield
         finally:
             for t in tasks:
                 t.cancel()
+            mqtt_box["out"].stop()
             store.close()
 
     return create_app(savi, health_probe, lifespan=lifespan)

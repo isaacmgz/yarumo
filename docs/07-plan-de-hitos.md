@@ -40,7 +40,7 @@ Aceptación:
 - Correr los detectores dos veces no duplica sugerencias.
 - Cada sugerencia trae su evidencia y su ahorro mensual estimado con la fórmula reproducible a mano.
 
-## H4 · Savi actúa y cuenta (2 sesiones)
+## H4 · Savi actúa y cuenta (2 sesiones) — 🟡 Construido (2026-09-30); falta tocar la notificación en un celular real y elegir el modelo de Ollama
 
 Construir: creación de automatizaciones en HA (con plan B), notificaciones accionables, escucha de acciones, cálculo de ahorro, sensores MQTT de Savi.
 

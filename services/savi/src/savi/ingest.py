@@ -79,6 +79,8 @@ class Ingest:
         self._connect = connect
         self._fetch_states = fetch_states or self._http_states
         self.cache: dict[str, dict] = {}
+        # Called for every subscribed event, after the cache is updated (H4 actions/savings).
+        self.listener: Callable[[str, dict[str, Any]], Awaitable[None]] | None = None
         self.connected = False
         self.stored = 0
         self.last_event_at: float | None = None
@@ -163,8 +165,14 @@ class Ingest:
                 if msg.get("type") != "event":
                     continue
                 event = msg.get("event") or {}
-                if event.get("event_type") == "state_changed":
-                    self.handle_state_changed(event.get("data") or {})
+                event_type, data = event.get("event_type", ""), event.get("data") or {}
+                if event_type == "state_changed":
+                    self.handle_state_changed(data)
+                if self.listener is not None:
+                    try:
+                        await self.listener(event_type, data)
+                    except Exception:
+                        log.exception("listener failed on %s", event_type)
 
     async def run_forever(self) -> None:
         backoff = BACKOFF_START_S

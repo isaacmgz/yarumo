@@ -1,1 +1,60 @@
-[]
+- id: savi_2
+  alias: Savi · Apagar lo que queda encendido al salir
+  description: 'Propuesta por Savi y aprobada el 2026-09-30. Evidencia: la TV: 12
+    de 16 salidas; el PC del estudio: 11 de 16 salidas. Cuando la casa queda sola,
+    muchas veces se queda prendido la TV y el PC del estudio (la TV: 12 de 16 salidas;
+    el PC del estudio: 11 de 16 salidas). Puedo apagarlos apenas salga el último.
+    No editar a mano: se desactiva desde Savi o desde HA.'
+  triggers:
+  - trigger: state
+    entity_id: binary_sensor.casa_ocupada
+    to: 'off'
+  conditions: []
+  actions:
+  - action: homeassistant.turn_off
+    target:
+      entity_id:
+      - switch.pc_estudio
+      - switch.tv_sala
+  - action: notify.residentes
+    continue_on_error: true
+    data:
+      title: Savi
+      message: Nadie quedó en casa. Apagué el PC del estudio y la TV.
+  mode: single
+- id: savi_1
+  alias: Savi · Apagar la plancha si la casa queda sola
+  description: 'Propuesta por Savi y aprobada el 2026-09-30. Evidencia: regla de seguridad
+    de fábrica (no aprendida). Esta no la aprendí, la traigo de fábrica: si la plancha
+    queda prendida y no hay nadie en casa, la apago de inmediato y les aviso. No editar
+    a mano: se desactiva desde Savi o desde HA.'
+  triggers:
+  - trigger: state
+    entity_id: binary_sensor.casa_ocupada
+    to: 'off'
+  - trigger: state
+    entity_id: switch.plancha_ropa
+    to: 'on'
+  conditions:
+  - condition: state
+    entity_id: binary_sensor.casa_ocupada
+    state: 'off'
+  - condition: state
+    entity_id: switch.plancha_ropa
+    state: 'on'
+  actions:
+  - action: homeassistant.turn_off
+    target:
+      entity_id:
+      - switch.plancha_ropa
+  - action: notify.residentes
+    continue_on_error: true
+    data:
+      title: Savi
+      message: La plancha estaba prendida y no hay nadie en casa. Ya la apagué.
+      data:
+        priority: high
+        ttl: 0
+        push:
+          interruption-level: critical
+  mode: single
