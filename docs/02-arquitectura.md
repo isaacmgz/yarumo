@@ -45,8 +45,8 @@ Total esperado: ~6–7 GB en uso, deja margen en 16 GB.
 
 ## Modelo de lenguaje
 
-- Por defecto: `qwen3:4b` (cuantizado, ~3 GB) por su buen español en CPU. Alternativa: `llama3.2:3b`.
-- Configurable con `OLLAMA_MODEL`. Se descarga una vez con internet (`podman exec ollama ollama pull qwen3:4b`) y luego funciona sin conexión.
+- Por defecto: `llama3.2:3b` (~2 GB), elegido en H4 tras medir en PC-A; ver la comparación y la guardia de cifras en `docs/05-savi-ia.md` §6.
+- Configurable con `OLLAMA_MODEL`. Se descarga una vez con internet (`podman exec ollama ollama pull llama3.2:3b`) y luego funciona sin conexión.
 - Presupuesto de latencia: respuesta de chat < 10 s en CPU. Si no se cumple, bajar de modelo antes de optimizar otra cosa.
 - Verificar al iniciar el hito H4 qué modelo da mejor español en ese equipo; dejar la elección escrita en `docs/05-savi-ia.md`.
 
@@ -119,7 +119,7 @@ HA_URL=http://127.0.0.1:8123
 HA_TOKEN=pegar_token_de_larga_duracion
 
 OLLAMA_URL=http://127.0.0.1:11434
-OLLAMA_MODEL=qwen3:4b
+OLLAMA_MODEL=llama3.2:3b
 
 # Tarifa de energía en COP/kWh. Tomar el valor de una factura real de EPM.
 TARIFA_COP_KWH=0

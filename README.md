@@ -17,7 +17,7 @@ Los specs están en [`docs/`](docs/) y son la fuente de verdad.
 cp .env.example .env              # editar HOST_IP, MQTT_PASSWORD, etc.
 ./scripts/mqtt-passwd.sh          # genera config/mosquitto/passwd desde .env
 podman compose up -d              # Mosquitto, Home Assistant y Ollama
-podman exec ollama ollama pull qwen3:4b   # o el valor de OLLAMA_MODEL
+podman exec ollama ollama pull llama3.2:3b   # o el valor de OLLAMA_MODEL
 ./scripts/check-stack.sh          # estado de cada servicio
 ```
 

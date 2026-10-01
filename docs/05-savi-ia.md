@@ -166,6 +166,16 @@ Si `TARIFA_VERIFICADA=false`, todo valor en COP lleva en el panel la marca "tari
 
 Cliente de Ollama (`/api/chat`) con `OLLAMA_MODEL`, temperatura 0,3, timeout 15 s. Si el modelo tiene modo de razonamiento (por ejemplo, Qwen3), desactivarlo para bajar latencia.
 
+**Modelo elegido (H4, 2026-09-30, medido en PC-A solo con CPU, ~6 tokens/s):** `llama3.2:3b`.
+
+| Modelo | Latencia | Resultado |
+|---|---|---|
+| `qwen3:4b` | 14–27 s | Ignora `think: false`, razona en inglés dentro de la respuesta. Descartado. |
+| `qwen2.5:3b` | 1–9 s | No responde la pregunta ("DATOS inexactos"). Descartado. |
+| `llama3.2:3b` | 4–10 s | Español fluido, pero a veces **inventa o suma cifras** aunque el prompt lo prohíba. |
+
+**Guardia de cifras (obligatoria en `llm.py`):** ningún modelo de este tamaño copia los números con fiabilidad. Toda respuesta del LLM pasa por un validador determinista: se extraen todos los números del texto y, si alguno no está en el conjunto de cifras que Savi le entregó (tolerando formato `55,46`/`55.46` y separador de miles), la respuesta se descarta y se usa la plantilla. Esto aplica la regla "el LLM no calcula" y es probable que la plantilla se use con frecuencia; es lo esperado.
+
 Usos:
 
 1. **Redactar la explicación** de cada sugerencia (título de ≤ 8 palabras + 2–3 frases). Entrada: la evidencia en JSON. Respaldo: plantilla con los mismos datos.
